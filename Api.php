@@ -152,7 +152,7 @@ class Api extends Component {
 					
 					
 					
-					if (!is_string($object) && $object instanceof GeoObject) {echo "a ";
+					if (!is_string($object) && $object instanceof GeoObject) {
 						$_object = $this->generateObject($object,$i);
 						$objects .= ".add($_object)\n"; 	
 						
