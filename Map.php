@@ -17,7 +17,7 @@ use esoftkz\yandexmaps\Interfaces;
  * @property array $objects
  * @property array $controls
  */
-class Map extends Component implements Interfaces\EventAggregate{
+class Map extends JavaScript implements Interfaces\EventAggregate{
 
 	/** @var array */
 	public $state = array();
@@ -42,7 +42,7 @@ class Map extends Component implements Interfaces\EventAggregate{
 	 */
 	public function __construct($id = 'yandexMap', array $state = array(),
 	  array $options = array()) {
-
+			
 		$this->setId($id);
 		$this->state = $state;
 
@@ -143,18 +143,28 @@ class Map extends Component implements Interfaces\EventAggregate{
 	 * @param array $objects
 	 */
 	public function setObjects(array $objects = array()) {
+		
 		$this->_objects = array();
-		foreach ($objects as $object) {
-			$this->addObject($object);
+		foreach ($objects as $key => $object) {
+			$this->addObject($object, $key);
+			
 		}
+		
 	}
 
 	/**
 	 * @param mixed $object
 	 * @return Map
 	 */
-	public function addObject($object) {
-		$this->_objects[] = $object;
+	public function addObject($object, $key = null) {
+		
+		if (null === $key) {
+			$this->_objects[] = $object;
+		} else {			
+			$this->_objects[$key] = $object;			
+		}
+		
+		
 
 		return $this;
 	}

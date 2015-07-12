@@ -13,7 +13,7 @@ use yii\base\Component;
  * @property array $properties
  * @property array $geometry
  */
-class GeoObject extends Component implements Interfaces\GeoObject{
+class GeoObject extends JavaScript implements Interfaces\GeoObject{
 	/** @var array */
 	private $_feature;
 	/** @var array */
@@ -27,6 +27,7 @@ class GeoObject extends Component implements Interfaces\GeoObject{
 	 * @param array $options
 	 */
 	public function __construct(array $feature, array $options = array()) {
+		
 		if (isset($options['events'])) {
 			$this->setEvents($options['events']);
 			unset($options['events']);

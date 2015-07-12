@@ -14,10 +14,8 @@ class Placemark  extends GeoObject implements Interfaces\EventAggregate{
 	private $_events = array();
 	
 	public function __construct(array $geometry, array $properties = array(), array $options = array()) {
-		if (isset($options['events'])) {
-			$this->setEvents($options['events']);
-			unset($options['events']);
-		}
+		
+		
 		
 		$feature = array(
 		  'geometry' => array(

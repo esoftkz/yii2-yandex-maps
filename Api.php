@@ -42,14 +42,20 @@ class Api extends Component {
 	public function addObject($object, $key = null) {
 		if (null === $key) {
 			$this->_objects[] = $object;
-		} else {
-			$this->_objects[$key] = $object;
+		} else {			
+			$this->_objects[$key] = $object;			
 		}
+		
+		
 		return $this;
+		
 	}
 	
 	protected function encodeArray($array) {
-		return count($array) > 0 ? Json::encode($array) : '{}';
+		$vowels = array('"%', '%"', '\n' ,'\t');	
+		$json = count($array) > 0 ? Json::encode($array) : '{}';
+		$json = str_replace($vowels, "", $json);		
+		return $json;
 	}
 	
 	/**
@@ -79,12 +85,12 @@ class Api extends Component {
 	 * Register client script.
 	 */
 	protected function registerScript() {
-		$js = "\$Maps = []; var placemark;\nymaps.ready(function() {\n";	
-		foreach ($this->_objects as $var => $object) {			
-			$js .= $this->generateObject($object, $var) . "\n";
-			
+		$js = "\$Maps = [];\nymaps.ready(function() {\n";
+		
+		foreach ($this->_objects as $var => $object) {				
+			$js .= $this->generateObject($object, $var) . "\n";			
 		}		
-		$js .= "});\n";		
+		$js .= "});\n";			
 		
 		Yii::$app->view->registerJs($js, View::POS_READY, self::SCRIPT_ID);
 	}
@@ -98,62 +104,71 @@ class Api extends Component {
 		if (method_exists($this, $generator)) {
 			$var = is_numeric($var) ? null : $var;
 			$js = $this->$generator($object, $var);
-			
-			
+						
 			if (count($object->getEvents()) > 0) {				
-				if (null !== $var && $class!='Placemark') {
-					$events = "\n\$Maps['$var'].events";
-					foreach ($object->getEvents() as $event => $handle) {			
-						$event = Json::encode($event);						
-						$events .= "\n.add($event, $handle)";
+				if (null !== $var) {
+					if($object instanceof Map){
+						$events = "\$Maps['$var'].events";
+						foreach ($object->getEvents() as $event => $handle) {
+							$event = Json::encode($event);						
+							$events .= "\n.add($event, $handle)";
+						}
+						$js .= "$events;\n";
 					}
-					$js .= "$events;\n";					
-				}elseif(null !== $var && $class=='Placemark'){
-					$js .= ");\n";
-					$events = "\n\$Maps['$var'].geoObjects.events";
-					foreach ($object->getEvents() as $event => $handle) {			
-						$event = Json::encode($event);						
-						$events .= "\n.add($event, $handle";
-					}
-					$js .= "$events\n";
+					
 				}
 			}
 			
 			
 		} else {
 			$js = Json::encode($object);
+			
 		}
-		
-
+	
+	
 		return $js;
 	}
 	
 	public function generateMap(Map $map, $var = null) {
+		
+		
 		$id = $map->id;
 		$state = $this->encodeArray($map->state);
 		$options = $this->encodeArray($map->options);
 		$js = "new ymaps.Map('$id', $state, $options)";	
 		
-		if (null !== $var) {
+		if (null !== $var) {			
 			$js = "\$Maps['$var'] = $js;\n";
 			
 			if (count($map->objects) > 0) {				
 				$objects = '';
 						
 				foreach ($map->objects as $i => $object) {
-					if (!$object) {
+					$var_obj = is_numeric($i) ? '' : "var ".$i.";";	
+					
+					if (!$object) {		
 						continue;
-					}					
-					if ($object instanceof GeoObject) {
-						$_object = $this->generateObject($object, $var); 					
+					}
+					
+					
+					
+					if (!is_string($object) && $object instanceof GeoObject) {echo "a ";
+						$_object = $this->generateObject($object,$i);
 						$objects .= ".add($_object)\n"; 	
+						
+						if (!empty($objects)) {
+							$js .= $var_obj."\n\$Maps['$id'].geoObjects$objects;\n";
+						}
+						
 					}elseif (is_string($object)) {
 						$js .= "$object;\n";
 					}
+					
+					if (!is_string($object) && $object instanceof Javascript) {
+						$js .= "$object->code;";
+					}
 				}
-				if (!empty($objects)) {
-					$js .= "\n\$Maps['$id'].geoObjects$objects;\n";
-				}
+				
 			}
 			
 			if (count($map->controls) > 0) {
@@ -174,18 +189,52 @@ class Api extends Component {
 		$geometry = Json::encode($object->geometry);
 		
 		$properties = $this->encodeArray($object->properties);
+		
 		$options = $this->encodeArray($object->options);
-		//Вот эта шняга работает только для одного placemark - нажуен массив (лень)
-		$js = "placemark = new ymaps.Placemark($geometry, $properties, $options)";
-		
-		
-		
+
+		$js = "new ymaps.Placemark($geometry, $properties, $options)";
+
+		return $js;
+	}
+	
+	public function generateGeoObjectCollection(GeoObjectCollection $object, $var = null) {
+		$properties = $this->encodeArray($object->properties);
+		$options = $this->encodeArray($object->options);
+
+		$js = "new ymaps.GeoObjectCollection($properties, $options)";
+		if (null !== $var) {
+			$js = $var." = $js";
+			
+			if (count($object->objects) > 0) {
+				foreach ($object->objects as $object) {
+					if (!$object) {
+						continue;
+					}
+					if (!is_string($object) && $object instanceof GeoObject) {
+						$object = $this->generateObject($object);
+						$js .= ".add($object)";
+					}
+					
+					
+					
+				}
+			}
+			
+		}
 		
 		return $js;
 	}
 	
 	
-	
+	public function generateJavaScript(JavaScript $object, $var = null) {
+		$js = $object->code;
+		
+		if (null !== $var) {
+			$js = "var $var = $js;\n";
+		}
+
+		return $js;
+	}
 	
 	
 	

@@ -39,7 +39,8 @@ class YandexMap extends Widget
 	}
    
     public function init()
-    {
+    {	
+	
         Event::on(View::className(), View::EVENT_AFTER_RENDER,
 		  function ($event) {
 			  if (!$this->isRendered) {
@@ -64,7 +65,7 @@ class YandexMap extends Widget
 	 * @return Map
 	 * @throws Exception
 	 */
-	public function getMap() {
+	public function getMap() {		
 		if (null === $this->_map) {
 			throw new Exception('Orphan map canvas.');
 		}
@@ -76,7 +77,8 @@ class YandexMap extends Widget
 	 * @param Map $map
 	 */
 	public function setMap(Map $map) {
-		$this->_map = $map;
+		
+		$this->_map = $map;		
 		$this->api->addObject($map, $map->id); 
 
 	}
