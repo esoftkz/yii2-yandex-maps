@@ -62,6 +62,7 @@ class Api extends Component {
 	 * Render client scripts.
 	 */
 	public function render() {
+		
 		$this->registerScriptFile();
 		$this->registerScript();
 	}
@@ -78,7 +79,14 @@ class Api extends Component {
 
 		$url = $this->protocol . '://' . $this->uri . '/' . $this->api_version . '/?lang=' . $this->language . '&load=' . $this->packages;
 
-		Yii::$app->view->registerJsFile($url, ['position' => View::POS_END]);
+		$asset = new YandexAsset;
+		$asset->js = [
+			$url
+		];		
+        $asset->register(Yii::$app->view);
+		
+		//Yii::$app->view->registerJsFile($url, ['position' => View::POS_END]);
+		
 	}
 
 	/**
